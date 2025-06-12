@@ -29,3 +29,18 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/*.auth-background {
+    background-image: url('../images/bgimg3.jpg');*/ /* relative to wwwroot/css */
+    /*background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;*/ /* optional */
+    /*position: relative;
+}*/
+

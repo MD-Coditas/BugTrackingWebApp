@@ -5,11 +5,18 @@ using BugTracker.Infrastructure.Interfaces;
 using BugTracker.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using FluentValidation;
+using BugTracker.Application.Validators;
+using BugTracker.Application.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register FluentValidation manually
+builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+
 builder.Services.AddDbContext<BugTrackerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -23,7 +30,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<IBugRepository, BugRepository>();
+builder.Services.AddScoped<IBugService, BugService>();
 
 
 var app = builder.Build();

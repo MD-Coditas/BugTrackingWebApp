@@ -38,7 +38,18 @@ namespace BugTracker.Web.Controllers
             var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync("MyCookieAuth", principal);
-            return RedirectToAction("Index", "Home");
+            switch (user.Role)
+            {
+                case "Admin":
+                    return RedirectToAction("Dashboard", "Admin");
+
+                case "QA":
+                    return RedirectToAction("Dashboard", "QA");
+
+                case "User":
+                default:
+                    return RedirectToAction("Report", "Bug"); // Or any user-specific page
+            }
         }
 
         public IActionResult Register() => View();
