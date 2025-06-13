@@ -1,0 +1,41 @@
+﻿@model IEnumerable<BugDto>
+@{
+    ViewData["Title"] = "My Reported Bugs";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">My Reported Bugs</h2>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">You haven't reported any bugs yet.</p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bug in Model)
+                {
+                    <tr>
+                        <td>@bug.Title</td>
+                        <td>@bug.Priority</td>
+                        <td>@bug.Status</td>
+                        <td>@bug.CreatedAt.ToString("g")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@bug.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -8,20 +8,17 @@ namespace BugTracker.Application.Validators
     {
         public UserDtoValidator()
         {
-            // USERNAME: Starts with letter, contains only letters and spaces
             RuleFor(x => x.UserName)
                 .NotEmpty().WithMessage("Username is required.")
                 .MaximumLength(100)
                 .Matches(@"^[A-Za-z][A-Za-z ]*$")
                 .WithMessage("Username must contain letters only.");
 
-            // EMAIL: Starts with letter, followed by alphanumerics, '@', letters, '.', letters
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
                 .Matches(@"^[A-Za-z0-9]*@[A-Za-z]+\.[A-Za-z]+$")
                 .WithMessage("Email must be in a valid format like 'example123@domain.com'.");
 
-            // PASSWORD: At least 6 chars, contains uppercase, lowercase, digit, special character
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required.")
                 .MinimumLength(6).WithMessage("Password must be at least 6 characters long.")
@@ -30,7 +27,6 @@ namespace BugTracker.Application.Validators
                 .Matches(@"[0-9]+").WithMessage("Password must contain at least one digit.")
                 .Matches(@"[\W_]+").WithMessage("Password must contain at least one special character.");
 
-            // CONFIRM PASSWORD: Must match password
             RuleFor(x => x.ConfirmPassword)
                 .Equal(x => x.Password).WithMessage("Passwords do not match.");
         }

@@ -1,2 +1,48 @@
-﻿<h2>Report a Bug</h2>
-<p>This is the user’s bug reporting form page.</p>
+﻿@model BugDto
+@{
+    ViewData["Title"] = "Report Bug";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Report a Bug</h2>
+
+    <form asp-action="Report" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Priority" class="form-label"></label>
+            <select asp-for="Priority" class="form-select">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+            <span asp-validation-for="Priority" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Screenshot" class="form-label">Upload Screenshot (optional)</label>
+            <input asp-for="Screenshot" type="file" class="form-control" />
+            <span asp-validation-for="Screenshot" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit Bug</button>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

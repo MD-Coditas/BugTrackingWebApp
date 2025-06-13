@@ -13,9 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
 
-// Register FluentValidation manually
-builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
 
 builder.Services.AddDbContext<BugTrackerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -28,6 +27,11 @@ builder.Services.AddAuthentication("MyCookieAuth")
     });
 builder.Services.AddAuthorization();
 
+// Register FluentValidation manually
+builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+builder.Services.AddScoped<IValidator<BugDto>, BugDtoValidator>();
+
+// Register repositories and services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBugRepository, BugRepository>();
@@ -55,7 +59,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}")
+    pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 

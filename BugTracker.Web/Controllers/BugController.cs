@@ -32,6 +32,9 @@ namespace BugTracker.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Report(BugDto dto)
         {
+            if (!ModelState.IsValid)
+                return View(dto);
+
             dto.ReporterId = GetUserId();
             await _bugService.SubmitBugAsync(dto);
             return RedirectToAction("MyBugs");
