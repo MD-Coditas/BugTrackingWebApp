@@ -2,6 +2,11 @@
 @{
     ViewData["Title"] = "Login";
 }
+@{
+    Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    Context.Response.Headers["Pragma"] = "no-cache";
+    Context.Response.Headers["Expires"] = "0";
+}
 
     <div class="container mt-5">
         <div class="row justify-content-center">

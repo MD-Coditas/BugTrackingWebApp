@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace BugTracker.Application.DTOs
 {
-    internal class CommentDto
+    public class CommentDto
     {
+        public Guid Id { get; set; }
+        public Guid BugId { get; set; }
+        public Guid UserId { get; set; }
+
+        public string Message { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+
+        public string UserName { get; set; } = string.Empty; // for display
     }
+
 }

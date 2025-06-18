@@ -3,19 +3,44 @@ using BugTracker.Application.DTOs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using BugTracker.Web.Filters;
+using Microsoft.AspNetCore.Authorization;
+using FluentValidation;
 
 namespace BugTracker.Web.Controllers
 {
     public class AccountController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IValidator<UserDto> _userValidator;
 
-        public AccountController(IUserService userService)
+        public AccountController(IUserService userService, IValidator<UserDto> userValidator)
         {
             _userService = userService;
+            _userValidator = userValidator;
         }
 
-        public IActionResult Login() => View();
+
+        [HttpGet, NoCache]
+        [AllowAnonymous]
+        public IActionResult Login()
+        {
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                // Redirect based on role
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                return role switch
+                {
+                    "Admin" => RedirectToAction("Dashboard", "Admin"),
+                    "QA" => RedirectToAction("Dashboard", "QA"),
+                    _ => RedirectToAction("Report", "Bug")
+                };
+            }
+
+            return View();
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> Login(UserDto dto)
@@ -53,17 +78,44 @@ namespace BugTracker.Web.Controllers
             }
         }
 
-        public IActionResult Register() => View();
+        [HttpGet, NoCache]
+        [AllowAnonymous]
+        public IActionResult Register()
+        {
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                return role switch
+                {
+                    "Admin" => RedirectToAction("Dashboard", "Admin"),
+                    "QA" => RedirectToAction("Dashboard", "QA"),
+                    _ => RedirectToAction("Report", "Bug")
+                };
+            }
+
+            return View();
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> Register(UserDto dto)
         {
-            if (!ModelState.IsValid) return View(dto);
+            var result = await _userValidator.ValidateAsync(dto);
+
+            if (!result.IsValid)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                }
+                return View(dto);
+            }
 
             dto.Role = "User";
+            var success = await _userService.RegisterAsync(dto);
 
-            var result = await _userService.RegisterAsync(dto);
-            if (!result)
+            if (!success)
             {
                 ModelState.AddModelError("", "Email already registered.");
                 return View(dto);
@@ -72,6 +124,8 @@ namespace BugTracker.Web.Controllers
             return RedirectToAction("Login");
         }
 
+
+        [NoCache]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("MyCookieAuth");

@@ -22,9 +22,17 @@ namespace BugTracker.Application.Validators
 
             When(x => x.Screenshot != null, () =>
             {
-                RuleFor(x => x.Screenshot!.ContentType)
-                    .Must(ct => ct == "image/jpeg" || ct == "image/png")
-                    .WithMessage("Screenshot must be a JPG or PNG image.");
+                RuleFor(x => x.Screenshot)
+                    .Must(file => file == null ||
+                        file.ContentType == "image/jpeg" ||
+                        file.ContentType == "image/png" ||
+                        file.ContentType == "image/jpg")
+                    .WithMessage("Only JPG, JPEG, or PNG images are allowed.");
+
+                RuleFor(x => x.Screenshot)
+                    .Must(file => file == null ||
+                        Path.GetExtension(file.FileName).ToLower() is ".jpg" or ".jpeg" or ".png")
+                    .WithMessage("Only JPG, JPEG, or PNG file extensions are accepted.");
 
                 RuleFor(x => x.Screenshot!.Length)
                     .LessThanOrEqualTo(5 * 1024 * 1024)

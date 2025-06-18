@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "Bug Details";
 }
+@{
+    Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    Context.Response.Headers["Pragma"] = "no-cache";
+    Context.Response.Headers["Expires"] = "0";
+}
+
 
 <div class="container mt-5">
     <h2 class="mb-4">Bug Details</h2>
@@ -31,5 +37,27 @@
         }
     </dl>
 
-    <a asp-action="MyBugs" class="btn btn-secondary">Back to My Bugs</a>
+    <hr />
+    <h4>Comments</h4>
+
+    <form asp-action="PostComment" method="post">
+        <input type="hidden" name="bugId" value="@ViewBag.BugId" />
+        <div class="mb-2">
+            <textarea name="message" class="form-control" placeholder="Add a comment..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-sm btn-primary">Post Comment</button>
+    </form>
+
+    <br />
+
+    @foreach (var comment in (IEnumerable<CommentDto>)ViewBag.Comments)
+    {
+        <div class="border rounded p-2 mb-2">
+            <strong>@comment.UserName</strong> <small class="text-muted">@comment.CreatedAt.ToString("g")</small>
+            <p class="mb-0">@comment.Message</p>
+        </div>
+    }
+
+
+    @* <a asp-action="MyBugs" class="btn btn-secondary">Back to My Bugs</a> *@
 </div>

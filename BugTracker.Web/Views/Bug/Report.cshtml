@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "Report Bug";
 }
+@{
+    Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    Context.Response.Headers["Pragma"] = "no-cache";
+    Context.Response.Headers["Expires"] = "0";
+}
+
 
 <div class="container mt-5">
     <h2 class="mb-4">Report a Bug</h2>
@@ -33,7 +39,7 @@
 
         <div class="mb-3">
             <label asp-for="Screenshot" class="form-label">Upload Screenshot (optional)</label>
-            <input asp-for="Screenshot" type="file" class="form-control" />
+            <input asp-for="Screenshot" type="file" class="form-control" accept=".jpg,.jpeg,.png" />
             <span asp-validation-for="Screenshot" class="text-danger"></span>
         </div>
 

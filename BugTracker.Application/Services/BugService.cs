@@ -89,6 +89,7 @@ namespace BugTracker.Application.Services
                 CreatedAt = bug.CreatedAt
             };
         }
+
     }
 
 }

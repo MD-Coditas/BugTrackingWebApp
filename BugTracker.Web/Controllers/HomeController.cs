@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using BugTracker.Web.Filters;
 using BugTracker.Web.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BugTracker.Web.Controllers
@@ -13,8 +16,11 @@ namespace BugTracker.Web.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
+        [NoCache]
+        [AllowAnonymous]
+        public async Task<IActionResult> Index()
         {
+            await HttpContext.SignOutAsync("MyCookieAuth");
             return View();
         }
 

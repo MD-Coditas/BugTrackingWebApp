@@ -16,7 +16,7 @@ namespace BugTracker.Application.Validators
 
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
-                .Matches(@"^[A-Za-z0-9]*@[A-Za-z]+\.[A-Za-z]+$")
+                .Matches(@"^[A-Za-z][A-Za-z0-9]*@[A-Za-z]+\.[A-Za-z]+$")
                 .WithMessage("Email must be in a valid format like 'example123@domain.com'.");
 
             RuleFor(x => x.Password)

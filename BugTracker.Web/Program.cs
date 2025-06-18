@@ -13,6 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Register FluentValidation manually
+builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
+builder.Services.AddScoped<IValidator<BugDto>, BugDtoValidator>();
+
 builder.Services.AddHttpContextAccessor();
 
 
@@ -27,15 +32,14 @@ builder.Services.AddAuthentication("MyCookieAuth")
     });
 builder.Services.AddAuthorization();
 
-// Register FluentValidation manually
-builder.Services.AddScoped<IValidator<UserDto>, UserDtoValidator>();
-builder.Services.AddScoped<IValidator<BugDto>, BugDtoValidator>();
-
 // Register repositories and services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBugRepository, BugRepository>();
 builder.Services.AddScoped<IBugService, BugService>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+
 
 
 var app = builder.Build();
@@ -50,6 +54,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    context.Response.Headers["Pragma"] = "no-cache";
+    context.Response.Headers["Expires"] = "0";
+
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
