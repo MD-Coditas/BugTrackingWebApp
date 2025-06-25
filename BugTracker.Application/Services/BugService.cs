@@ -2,6 +2,7 @@
 using BugTracker.Application.Interfaces;
 using BugTracker.Infrastructure.Interfaces;
 using BugTracker.Infrastructure.Models;
+using BugTracker.Infrastructure.Models.Filters;
 using BugTracker.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using System;
@@ -88,6 +89,44 @@ namespace BugTracker.Application.Services
                 ScreenshotPath = bug.ScreenshotPath,
                 CreatedAt = bug.CreatedAt
             };
+        }
+
+        public async Task<IEnumerable<BugDto>> GetAllBugsAsync()
+        {
+            var bugs = await _bugRepository.GetAllAsync();
+
+            return bugs.Select(b => new BugDto
+            {
+                Id = b.Id,
+                Title = b.Title,
+                Description = b.Description,
+                Priority = b.Priority,
+                Status = b.Status,
+                CreatedAt = b.CreatedAt,
+                ScreenshotPath = b.ScreenshotPath,
+                ReporterId = b.ReporterId
+            });
+        }
+
+        public async Task UpdateStatusAsync(Guid bugId, string newStatus)
+        {
+            await _bugRepository.UpdateStatusAsync(bugId, newStatus);
+        }
+        public async Task<IEnumerable<BugDto>> GetFilteredBugsAsync(BugFilterDto filter)
+        {
+            var bugs = await _bugRepository.GetFilteredAsync(filter);
+
+            return bugs.Select(b => new BugDto
+            {
+                Id = b.Id,
+                Title = b.Title,
+                Description = b.Description,
+                Priority = b.Priority,
+                Status = b.Status,
+                CreatedAt = b.CreatedAt,
+                ScreenshotPath = b.ScreenshotPath,
+                ReporterId = b.ReporterId,
+            });
         }
 
     }

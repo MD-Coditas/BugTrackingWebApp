@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using BugTracker.Web.Filters;
 using System.Security.Claims;
 using FluentValidation;
+using BugTracker.Application.Enums;
+using BugTracker.Infrastructure.Models.Filters;
 
 namespace BugTracker.Web.Controllers
 {
@@ -59,13 +61,34 @@ namespace BugTracker.Web.Controllers
         }
 
 
+        //[NoCache]
+        //public async Task<IActionResult> MyBugs()
+        //{
+        //    var userId = GetUserId();
+        //    var bugs = await _bugService.GetUserBugsAsync(userId);
+        //    return View(bugs);
+        //}
+
+        [Authorize(Roles = "User")]
         [NoCache]
-        public async Task<IActionResult> MyBugs()
+        public async Task<IActionResult> MyBugs(string keyword, string status, string priority)
         {
+            ViewBag.StatusList = Enum.GetValues(typeof(Status)).Cast<Status>();
+            ViewBag.Priorities = new[] { "Low", "Medium", "High" };
+
             var userId = GetUserId();
-            var bugs = await _bugService.GetUserBugsAsync(userId);
+            var filter = new BugFilterDto
+            {
+                Keyword = keyword,
+                Status = status,
+                Priority = priority,
+                ReporterId = userId
+            };
+
+            var bugs = await _bugService.GetFilteredBugsAsync(filter);
             return View(bugs);
         }
+
 
         [NoCache]
         public async Task<IActionResult> Details(Guid id)

@@ -32,7 +32,7 @@ namespace BugTracker.Web.Controllers
 
                 return role switch
                 {
-                    "Admin" => RedirectToAction("Dashboard", "Admin"),
+                    "Admin" => RedirectToAction("AllBugs", "Admin"),
                     "QA" => RedirectToAction("Dashboard", "QA"),
                     _ => RedirectToAction("Report", "Bug")
                 };
@@ -67,14 +67,14 @@ namespace BugTracker.Web.Controllers
             switch (user.Role)
             {
                 case "Admin":
-                    return RedirectToAction("Dashboard", "Admin");
+                    return RedirectToAction("AllBugs", "Admin");
 
                 case "QA":
                     return RedirectToAction("Dashboard", "QA");
 
                 case "User":
                 default:
-                    return RedirectToAction("Report", "Bug"); // Or any user-specific page
+                    return RedirectToAction("Report", "Bug");
             }
         }
 
@@ -88,7 +88,7 @@ namespace BugTracker.Web.Controllers
 
                 return role switch
                 {
-                    "Admin" => RedirectToAction("Dashboard", "Admin"),
+                    "Admin" => RedirectToAction("AllBugs", "Admin"),
                     "QA" => RedirectToAction("Dashboard", "QA"),
                     _ => RedirectToAction("Report", "Bug")
                 };

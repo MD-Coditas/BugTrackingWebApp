@@ -1,0 +1,132 @@
+﻿@model IEnumerable<BugDto>
+@using BugTracker.Application.Enums
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@functions {
+    string GetPriorityClass(string? priority)
+    {
+        return priority switch
+        {
+            "High" => "text-danger fw-bold",
+            "Medium" => "text-warning fw-semibold",
+            "Low" => "text-warning text-opacity-75 fw-bold",
+            _ => "text-secondary"
+        };
+    }
+}
+
+
+@{
+    ViewData["Title"] = "All Reported Bugs";
+}
+
+@functions {
+    string GetDisplayName(Enum value)
+    {
+        return value.GetType()
+                    .GetMember(value.ToString())[0]
+                    .GetCustomAttribute<DisplayAttribute>()?.Name ?? value.ToString();
+    }
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">All Reported Bugs</h2>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-3">
+            <input type="text" name="keyword" class="form-control" placeholder="Search title, description or reporter" value="@Context.Request.Query["keyword"]" />
+        </div>
+
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
+                {
+                    var displayValue = GetDisplayName(status);
+                    <option value="@displayValue" selected="@(Context.Request.Query["status"] == displayValue ? "selected" : null)">
+                        @displayValue
+                    </option>
+                }
+            </select>
+        </div>
+
+
+
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </div>
+    </form>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">No bugs reported yet.</p>
+    }
+    else
+    {
+        
+
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Reported On</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bug in Model)
+                {
+                    <tr>
+                        <td>@bug.Title</td>
+                        <td class="@GetPriorityClass(bug.Priority)">
+                            @bug.Priority
+                        </td>
+                        <td>@bug.Status</td>
+                        <td>@bug.CreatedAt.ToString("g")</td>
+                        <td>
+                            <a asp-controller="Bug" asp-action="Details" asp-route-id="@bug.Id" class="btn btn-sm btn-primary me-2">Details</a>
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal-@bug.Id">
+                                Change Status
+                            </button>
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="statusModal-@bug.Id" tabindex="-1" aria-labelledby="statusModalLabel-@bug.Id" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-action="UpdateStatus" method="post">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="statusModalLabel-@bug.Id">Update Status - @bug.Title</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="hidden" name="id" value="@bug.Id" />
+                                                <div class="form-group mb-2">
+                                                    <label for="status">Select Status</label>
+                                                    <select name="status" class="form-select">
+                                                        @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
+                                                        {
+                                                            var displayValue = GetDisplayName(status);
+                                                            <option value="@displayValue" selected="@(bug.Status == displayValue ? "selected" : null)">
+                                                                @displayValue
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Update Status</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

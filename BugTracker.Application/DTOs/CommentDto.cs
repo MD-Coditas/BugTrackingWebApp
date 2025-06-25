@@ -15,7 +15,7 @@ namespace BugTracker.Application.DTOs
         public string Message { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
 
-        public string UserName { get; set; } = string.Empty; // for display
+        public string UserName { get; set; } = string.Empty;
     }
 
 }

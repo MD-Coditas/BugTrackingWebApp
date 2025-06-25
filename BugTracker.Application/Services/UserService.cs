@@ -75,6 +75,13 @@ namespace BugTracker.Application.Services
         {
             return !string.IsNullOrEmpty(hash) && BCrypt.Net.BCrypt.Verify(password, hash);
         }
+
+        public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+        {
+            var users = await _userRepo.GetAllAsync();
+            return users.Select(u => new UserDto { Id = u.Id, UserName = u.UserName });
+        }
+
     }
 
 }

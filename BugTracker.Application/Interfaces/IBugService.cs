@@ -1,9 +1,6 @@
 ﻿using BugTracker.Application.DTOs;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using BugTracker.Infrastructure.Models.Filters;
 
 namespace BugTracker.Application.Interfaces
 {
@@ -12,6 +9,9 @@ namespace BugTracker.Application.Interfaces
         Task SubmitBugAsync(BugDto bugDto);
         Task<IEnumerable<BugDto>> GetUserBugsAsync(Guid userId);
         Task<BugDto?> GetBugDetailsAsync(Guid bugId);
+        Task<IEnumerable<BugDto>> GetAllBugsAsync();
+        Task UpdateStatusAsync(Guid bugId, string newStatus);
+        Task<IEnumerable<BugDto>> GetFilteredBugsAsync(BugFilterDto filter);
     }
 
 }

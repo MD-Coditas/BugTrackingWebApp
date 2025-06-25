@@ -1,4 +1,5 @@
 ﻿using BugTracker.Infrastructure.Models;
+using BugTracker.Infrastructure.Models.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,9 @@ namespace BugTracker.Infrastructure.Interfaces
         Task AddAsync(Bug bug);
         Task<IEnumerable<Bug>> GetByReporterIdAsync(Guid reporterId);
         Task<Bug?> GetByIdAsync(Guid id);
+        Task<IEnumerable<Bug>> GetAllAsync();
+        Task UpdateStatusAsync(Guid bugId, string newStatus);
+        Task<IEnumerable<Bug>> GetFilteredAsync(BugFilterDto filter);
     }
 
 }
