@@ -44,6 +44,33 @@ namespace BugTracker.Web.Controllers
             return RedirectToAction("AllBugs");
         }
 
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ManageRoles(string search)
+        {
+            var users = await _userService.GetAllUsersAsync();
+
+            var filteredUsers = users
+                .Where(u => (u.Role == "User" || u.Role == "QA") &&
+                            (string.IsNullOrEmpty(search) ||
+                             u.UserName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                             u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            ViewBag.Search = search;
+            return View(filteredUsers);
+        }
+
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateRoles(List<UserDto> users)
+        {
+            foreach (var user in users)
+            {
+                await _userService.UpdateUserRoleAsync(user.Id, user.Role);
+            }
+            return RedirectToAction("ManageRoles");
+        }
     }
 
 }

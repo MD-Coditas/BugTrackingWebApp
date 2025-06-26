@@ -46,9 +46,9 @@ namespace BugTracker.Application.Services
             var bug = new Bug
             {
                 Id = Guid.NewGuid(),
-                Title = dto.Title,
-                Description = dto.Description,
-                Priority = dto.Priority,
+                Title = dto.Title ?? "NA",
+                Description = dto.Description ?? "NA",
+                Priority = dto.Priority ?? "NA",
                 ScreenshotPath = screenshotPath,
                 CreatedAt = DateTime.Now,
                 ReporterId = dto.ReporterId,

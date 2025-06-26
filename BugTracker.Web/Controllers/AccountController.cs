@@ -131,8 +131,6 @@ namespace BugTracker.Web.Controllers
             await HttpContext.SignOutAsync("MyCookieAuth");
             return RedirectToAction("Login");
         }
-
-        //public IActionResult AccessDenied() => View("AccessDenied");
     }
 
 }

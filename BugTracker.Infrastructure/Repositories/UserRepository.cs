@@ -28,5 +28,14 @@ namespace BugTracker.Infrastructure.Repositories
             return await _context.Users.ToListAsync();
         }
 
+        public async Task UpdateRoleAsync(Guid userId, string newRole)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null)
+            {
+                user.Role = newRole;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

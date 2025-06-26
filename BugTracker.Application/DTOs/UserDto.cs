@@ -14,7 +14,7 @@ namespace BugTracker.Application.DTOs
         public string? Email { get; set; }
         public string? Password { get; set; }
         public string? ConfirmPassword { get; set; }
-        public string Role { get; set; } = "User"; // default role
+        public string Role { get; set; } = "User";
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 

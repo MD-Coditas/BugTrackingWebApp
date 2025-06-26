@@ -1,2 +1,124 @@
-﻿<h2>QA Dashboard</h2>
-<p>Welcome, QA user!</p>
+﻿@model List<BugDto>
+@using BugTracker.Application.Enums
+@using System.ComponentModel.DataAnnotations
+@using System.Reflection
+@functions {
+    string GetPriorityClass(string? priority)
+    {
+        return priority switch
+        {
+            "High" => "text-danger fw-bold",
+            "Medium" => "text-warning fw-semibold",
+            "Low" => "text-warning text-opacity-75 fw-bold",
+            _ => "text-secondary"
+        };
+    }
+}
+
+@{
+    ViewData["Title"] = "QA Dashboard";
+}
+
+<h2>Manage Bugs</h2>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="text" name="keyword" value="@Context.Request.Query["keyword"]" class="form-control" placeholder="Search bugs..." />
+    </div>
+
+    <div class="col-md-3">
+        <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
+            {
+                var display = status.GetType().GetMember(status.ToString())[0]
+                .GetCustomAttribute<DisplayAttribute>()?.Name ?? status.ToString();
+
+                if (display == "Resolved" || display == "Closed")
+                {
+                    <option value="@display" selected="@(Context.Request.Query["status"] == display ? "selected" : null)">
+                        @display
+                    </option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="priority" class="form-select">
+            <option value="">All Priorities</option>
+            @foreach (var p in (string[])ViewBag.Priorities)
+            {
+                <option value="@p" selected="@(Context.Request.Query["priority"] == p ? "selected" : null)">
+                    @p
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+</form>
+
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Reported At</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var bug in Model)
+        {
+            <tr>
+                <td>@bug.Title</td>
+                <td>@bug.Status</td>
+                <td class="@GetPriorityClass(bug.Priority)">
+                    @bug.Priority
+                </td>
+                <td>@bug.CreatedAt.ToString("g")</td>
+                <td>
+                    <a asp-controller="Bug" asp-action="Details" asp-route-id="@bug.Id" class="btn btn-sm btn-info">Details</a>
+
+                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal-@bug.Id">
+                        Change Status
+                    </button>
+
+                    <div class="modal fade" id="statusModal-@bug.Id" tabindex="-1" aria-labelledby="modalLabel-@bug.Id" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form asp-action="UpdateStatus" method="post">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Update Status for @bug.Title</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <input type="hidden" name="id" value="@bug.Id" />
+                                        <select name="status" class="form-select">
+                                            @foreach (var status in Enum.GetValues(typeof(Status)).Cast<Status>())
+                                            {
+                                                var display = status.GetType().GetMember(status.ToString())[0]
+                                                .GetCustomAttribute<DisplayAttribute>()?.Name ?? status.ToString();
+
+                                                <option value="@display" selected="@(bug.Status == display ? "selected" : null)">
+                                                    @display
+                                                </option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

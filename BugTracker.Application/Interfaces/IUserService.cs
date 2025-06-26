@@ -1,9 +1,4 @@
 ﻿using BugTracker.Application.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BugTracker.Application.Interfaces
 {
@@ -13,5 +8,7 @@ namespace BugTracker.Application.Interfaces
         Task<UserDto?> ValidateUserAsync(string email, string password);
         Task<UserDto?> GetByEmailAsync(string email);
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
+        Task UpdateUserRoleAsync(Guid userId, string newRole);
+
     }
 }

@@ -2,6 +2,7 @@
 using BugTracker.Application.Interfaces;
 using BugTracker.Infrastructure.Interfaces;
 using BugTracker.Infrastructure.Models;
+using BugTracker.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,7 +80,19 @@ namespace BugTracker.Application.Services
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _userRepo.GetAllAsync();
-            return users.Select(u => new UserDto { Id = u.Id, UserName = u.UserName });
+            return users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,  
+                Role = u.Role
+            });
+        }
+
+
+        public async Task UpdateUserRoleAsync(Guid userId, string newRole)
+        {
+            await _userRepo.UpdateRoleAsync(userId, newRole);
         }
 
     }
