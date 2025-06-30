@@ -1,7 +1,8 @@
-﻿@model IEnumerable<BugDto>
+﻿@model PagedResult<BugDto>
 @using BugTracker.Application.Enums
 @using System.ComponentModel.DataAnnotations
 @using System.Reflection
+
 @functions {
     string GetPriorityClass(string? priority)
     {
@@ -13,48 +14,59 @@
             _ => "text-secondary"
         };
     }
+
+    string GetDisplayName(Enum value)
+    {
+        return value.GetType()
+                    .GetMember(value.ToString())[0]
+                    .GetCustomAttribute<DisplayAttribute>()?.Name ?? value.ToString();
+    }
 }
 
 @{
     ViewData["Title"] = "My Reported Bugs";
-}
-@{
-    Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-    Context.Response.Headers["Pragma"] = "no-cache";
-    Context.Response.Headers["Expires"] = "0";
+    var query = Context.Request.Query;
+    var keyword = query["keyword"];
+    var status = query["status"];
+    var priority = query["priority"];
+    var pageSize = ViewBag.PageSize ?? 5;
 }
 
 <div class="container mt-5">
-    <h2 class="mb-4">My Reported Bugs</h2>
+    <h2 class="mb-4">Reported Bugs</h2>
 
     <form method="get" class="row g-2 mb-4">
-        <div class="col-md-4">
-            <input type="text" name="keyword" class="form-control" placeholder="Search bugs..." value="@Context.Request.Query["keyword"]" />
+        <div class="col-md-3">
+            <input type="text" name="keyword" class="form-control" placeholder="Search bugs..." value="@keyword" />
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="status" class="form-select">
                 <option value="">All Statuses</option>
-                @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
+                @foreach (var stat in (IEnumerable<Status>)ViewBag.StatusList)
                 {
-                    var displayValue = status.GetType()
-                    .GetMember(status.ToString())[0]
-                    .GetCustomAttribute<DisplayAttribute>()?.Name ?? status.ToString();
-
-                    <option value="@displayValue" selected="@(Context.Request.Query["status"] == displayValue ? "selected" : null)">
-                        @displayValue
-                    </option>
+                    var display = GetDisplayName(stat);
+                    <option value="@display" selected="@(status == display ? "selected" : null)">@display</option>
                 }
             </select>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="priority" class="form-select">
                 <option value="">All Priorities</option>
                 @foreach (var p in (string[])ViewBag.Priorities)
                 {
-                    <option value="@p" selected="@(Context.Request.Query["priority"] == p ? "selected" : null)">
-                        @p
+                    <option value="@p" selected="@(priority == p ? "selected" : null)">@p</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="pageSize" class="form-select" onchange="this.form.submit()">
+                @foreach (var size in new[] { 5, 10, 20, 50 })
+                {
+                    <option value="@size" selected="@(size == pageSize ? "selected" : null)">
+                        @size per page
                     </option>
                 }
             </select>
@@ -65,14 +77,12 @@
         </div>
     </form>
 
-    @if (!Model.Any())
+    @if (!Model.Items.Any())
     {
         <p class="text-muted">You haven't reported any bugs yet.</p>
     }
     else
     {
-        
-
         <table class="table table-bordered">
             <thead class="table-light">
                 <tr>
@@ -84,13 +94,11 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var bug in Model)
+                @foreach (var bug in Model.Items)
                 {
                     <tr>
                         <td>@bug.Title</td>
-                        <td class="@GetPriorityClass(bug.Priority)">
-                            @bug.Priority
-                        </td>
+                        <td class="@GetPriorityClass(bug.Priority)">@bug.Priority</td>
                         <td>@bug.Status</td>
                         <td>@bug.CreatedAt.ToString("g")</td>
                         <td>
@@ -102,3 +110,15 @@
         </table>
     }
 </div>
+
+@{
+    ViewBag.PageAction = "MyBugs";
+    ViewBag.PageController = "Bug";
+    ViewBag.RouteValues = new Dictionary<string, object>
+            {
+                { "keyword", keyword },
+                { "status", status },
+                { "priority", priority }
+            };
+}
+@await Html.PartialAsync("_Pagination", Model)

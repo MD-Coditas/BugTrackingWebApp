@@ -17,11 +17,13 @@ namespace BugTracker.Application.Services
     {
         private readonly IBugRepository _bugRepository;
         private readonly IWebHostEnvironment _env;
+        private readonly IEmailService _emailService;
 
-        public BugService(IBugRepository bugRepository, IWebHostEnvironment env)
+        public BugService(IBugRepository bugRepository, IWebHostEnvironment env, IEmailService emailService)
         {
             _bugRepository = bugRepository;
             _env = env;
+            _emailService = emailService;
         }
 
         public async Task SubmitBugAsync(BugDto dto)
@@ -46,9 +48,9 @@ namespace BugTracker.Application.Services
             var bug = new Bug
             {
                 Id = Guid.NewGuid(),
-                Title = dto.Title ?? "NA",
-                Description = dto.Description ?? "NA",
-                Priority = dto.Priority ?? "NA",
+                Title = dto.Title!,
+                Description = dto.Description!,
+                Priority = dto.Priority!,
                 ScreenshotPath = screenshotPath,
                 CreatedAt = DateTime.Now,
                 ReporterId = dto.ReporterId,
@@ -56,22 +58,6 @@ namespace BugTracker.Application.Services
             };
 
             await _bugRepository.AddAsync(bug);
-        }
-
-        public async Task<IEnumerable<BugDto>> GetUserBugsAsync(Guid userId)
-        {
-            var bugs = await _bugRepository.GetByReporterIdAsync(userId);
-
-            return bugs.Select(b => new BugDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Description = b.Description,
-                Priority = b.Priority,
-                Status = b.Status,
-                CreatedAt = b.CreatedAt,
-                ScreenshotPath = b.ScreenshotPath
-            });
         }
 
         public async Task<BugDto?> GetBugDetailsAsync(Guid bugId)
@@ -91,44 +77,54 @@ namespace BugTracker.Application.Services
             };
         }
 
-        public async Task<IEnumerable<BugDto>> GetAllBugsAsync()
-        {
-            var bugs = await _bugRepository.GetAllAsync();
-
-            return bugs.Select(b => new BugDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Description = b.Description,
-                Priority = b.Priority,
-                Status = b.Status,
-                CreatedAt = b.CreatedAt,
-                ScreenshotPath = b.ScreenshotPath,
-                ReporterId = b.ReporterId
-            });
-        }
-
         public async Task UpdateStatusAsync(Guid bugId, string newStatus)
         {
-            await _bugRepository.UpdateStatusAsync(bugId, newStatus);
-        }
-        public async Task<IEnumerable<BugDto>> GetFilteredBugsAsync(BugFilterDto filter)
-        {
-            var bugs = await _bugRepository.GetFilteredAsync(filter);
+            var bug = await _bugRepository.GetByIdAsync(bugId);
 
-            return bugs.Select(b => new BugDto
+            if (bug == null) return;
+
+            var oldStatus = bug.Status;
+
+            if (oldStatus != newStatus)
             {
-                Id = b.Id,
-                Title = b.Title,
-                Description = b.Description,
-                Priority = b.Priority,
-                Status = b.Status,
-                CreatedAt = b.CreatedAt,
-                ScreenshotPath = b.ScreenshotPath,
-                ReporterId = b.ReporterId,
-            });
+                bug.Status = newStatus;
+                await _bugRepository.UpdateStatusAsync(bugId, newStatus);
+
+                var emailBody = $@"
+            <h3>Bug Status Updated</h3>
+            <p><strong>Title:</strong> {bug.Title}</p>
+            <p><strong>Old Status:</strong> {oldStatus}</p>
+            <p><strong>New Status:</strong> {newStatus}</p>
+            <p><strong>Updated At:</strong> {DateTime.Now}</p>";
+
+                await _emailService.SendEmailAsync(bug.Reporter.Email, "Bug Status Updated", emailBody);
+            }
         }
+        
+        public async Task<PagedResult<BugDto>> GetFilteredBugsPagedAsync(BugFilterDto filter, int page, int pageSize)
+        {
+            var all = await _bugRepository.GetFilteredAsync(filter);
+            var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
+            var result = new PagedResult<BugDto>
+            {
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalItems = all.Count(),
+                Items = items.Select(b => new BugDto
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Description = b.Description,
+                    Priority = b.Priority,
+                    Status = b.Status,
+                    CreatedAt = b.CreatedAt,
+                    ScreenshotPath = b.ScreenshotPath,
+                    ReporterId = b.ReporterId
+                })
+            };
+
+            return result;
+        }
     }
-
 }

@@ -60,21 +60,13 @@ namespace BugTracker.Web.Controllers
             return RedirectToAction("MyBugs");
         }
 
-
-        //[NoCache]
-        //public async Task<IActionResult> MyBugs()
-        //{
-        //    var userId = GetUserId();
-        //    var bugs = await _bugService.GetUserBugsAsync(userId);
-        //    return View(bugs);
-        //}
-
         [Authorize(Roles = "User")]
         [NoCache]
-        public async Task<IActionResult> MyBugs(string keyword, string status, string priority)
+        public async Task<IActionResult> MyBugs(string keyword, string status, string priority, int page = 1, int pageSize = 10)
         {
             ViewBag.StatusList = Enum.GetValues(typeof(Status)).Cast<Status>();
             ViewBag.Priorities = new[] { "Low", "Medium", "High" };
+            ViewBag.PageSize = pageSize;
 
             var userId = GetUserId();
             var filter = new BugFilterDto
@@ -85,9 +77,10 @@ namespace BugTracker.Web.Controllers
                 ReporterId = userId
             };
 
-            var bugs = await _bugService.GetFilteredBugsAsync(filter);
-            return View(bugs);
+            var result = await _bugService.GetFilteredBugsPagedAsync(filter, page, pageSize);
+            return View(result);
         }
+
 
 
         [NoCache]

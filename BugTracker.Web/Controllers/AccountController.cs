@@ -27,7 +27,6 @@ namespace BugTracker.Web.Controllers
         {
             if (User.Identity?.IsAuthenticated ?? false)
             {
-                // Redirect based on role
                 var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
                 return role switch

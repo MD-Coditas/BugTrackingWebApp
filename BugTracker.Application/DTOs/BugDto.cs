@@ -12,7 +12,7 @@ namespace BugTracker.Application.DTOs
         public Guid Id { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public string? Priority { get; set; } //(Low, Medium, High)
+        public string? Priority { get; set; }
         public IFormFile? Screenshot { get; set; }
         public string? ScreenshotPath { get; set; }
         public DateTime CreatedAt { get; set; }

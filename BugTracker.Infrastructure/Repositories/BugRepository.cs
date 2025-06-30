@@ -37,6 +37,7 @@ namespace BugTracker.Infrastructure.Repositories
         {
             return await _context.Bugs
                 .Include(b => b.Comments)
+                .Include(b => b.Reporter)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
         public async Task<IEnumerable<Bug>> GetAllAsync()

@@ -22,15 +22,15 @@ namespace BugTracker.Application.Services
 
         public async Task<bool> RegisterAsync(UserDto userDto)
         {
-            var userExists = await _userRepo.GetByEmailAsync(userDto.Email);
+            var userExists = await _userRepo.GetByEmailAsync(userDto.Email!);
             if (userExists != null) return false;
 
             var user = new User
             {
                 Id = Guid.NewGuid(),
-                UserName = userDto.UserName,
-                Email = userDto.Email,
-                PasswordHash = HashPassword(userDto.Password),
+                UserName = userDto.UserName!,
+                Email = userDto.Email!,
+                PasswordHash = HashPassword(userDto.Password!),
                 Role = userDto.Role,
                 CreatedAt = DateTime.Now
             };
@@ -52,18 +52,6 @@ namespace BugTracker.Application.Services
                 UserName = user.UserName,
                 Role = user.Role,
                 CreatedAt = user.CreatedAt
-            };
-        }
-
-        public async Task<UserDto?> GetByEmailAsync(string email)
-        {
-            var user = await _userRepo.GetByEmailAsync(email);
-            return user == null ? null : new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                UserName = user.UserName,
-                Role = user.Role
             };
         }
 
@@ -94,6 +82,27 @@ namespace BugTracker.Application.Services
         {
             await _userRepo.UpdateRoleAsync(userId, newRole);
         }
+
+        public async Task<PagedResult<UserDto>> GetFilteredUsersPagedAsync(string? search, int page, int pageSize)
+        {
+            var all = (await GetAllUsersAsync())
+                .Where(u => (u.Role == "User" || u.Role == "QA") &&
+                            (string.IsNullOrEmpty(search) ||
+                             u.UserName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                             u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            var paged = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResult<UserDto>
+            {
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalItems = all.Count(),
+                Items = paged
+            };
+        }
+
 
     }
 

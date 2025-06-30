@@ -1,7 +1,8 @@
-﻿@model IEnumerable<BugDto>
+﻿@model PagedResult<BugDto>
 @using BugTracker.Application.Enums
 @using System.ComponentModel.DataAnnotations
 @using System.Reflection
+
 @functions {
     string GetPriorityClass(string? priority)
     {
@@ -13,14 +14,7 @@
             _ => "text-secondary"
         };
     }
-}
 
-
-@{
-    ViewData["Title"] = "All Reported Bugs";
-}
-
-@functions {
     string GetDisplayName(Enum value)
     {
         return value.GetType()
@@ -29,42 +23,68 @@
     }
 }
 
+@{
+    ViewData["Title"] = "All Reported Bugs";
+    var query = Context.Request.Query;
+    var keyword = query["keyword"];
+    var status = query["status"];
+    var reporterId = query["reporterId"];
+    var pageSize = ViewBag.PageSize ?? 5;
+}
+
 <div class="container mt-5">
     <h2 class="mb-4">All Reported Bugs</h2>
 
     <form method="get" class="row g-2 mb-4">
         <div class="col-md-3">
-            <input type="text" name="keyword" class="form-control" placeholder="Search title, description or reporter" value="@Context.Request.Query["keyword"]" />
+            <input type="text" name="keyword" class="form-control" placeholder="Search title, description or reporter" value="@keyword" />
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select name="status" class="form-select">
                 <option value="">All Statuses</option>
-                @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
+                @foreach (var stat in (IEnumerable<Status>)ViewBag.StatusList)
                 {
-                    var displayValue = GetDisplayName(status);
-                    <option value="@displayValue" selected="@(Context.Request.Query["status"] == displayValue ? "selected" : null)">
-                        @displayValue
+                    var displayValue = GetDisplayName(stat);
+                    <option value="@displayValue" selected="@(status == displayValue ? "selected" : null)">@displayValue</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <select name="reporterId" class="form-select">
+                <option value="">All Reporters</option>
+                @foreach (var user in ViewBag.Reporters)
+                {
+                    <option value="@user.Id" selected="@(reporterId == user.Id.ToString() ? "selected" : null)">
+                        @user.UserName
                     </option>
                 }
             </select>
         </div>
 
+        <div class="col-md-2">
+            <select name="pageSize" class="form-select" onchange="this.form.submit()">
+                @foreach (var size in new[] { 5, 10, 20, 50 })
+                {
+                    <option value="@size" selected="@(size == pageSize ? "selected" : null)">
+                        @size per page
+                    </option>
+                }
+            </select>
+        </div>
 
-
-        <div class="col-md-3">
+        <div class="col-md-2">
             <button type="submit" class="btn btn-primary">Apply Filters</button>
         </div>
     </form>
 
-    @if (!Model.Any())
+    @if (!Model.Items.Any())
     {
         <p class="text-muted">No bugs reported yet.</p>
     }
     else
     {
-        
-
         <table class="table table-bordered table-hover">
             <thead class="table-light">
                 <tr>
@@ -72,26 +92,22 @@
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Reported On</th>
-                    <th>Created</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var bug in Model)
+                @foreach (var bug in Model.Items)
                 {
                     <tr>
                         <td>@bug.Title</td>
-                        <td class="@GetPriorityClass(bug.Priority)">
-                            @bug.Priority
-                        </td>
+                        <td class="@GetPriorityClass(bug.Priority)">@bug.Priority</td>
                         <td>@bug.Status</td>
                         <td>@bug.CreatedAt.ToString("g")</td>
                         <td>
                             <a asp-controller="Bug" asp-action="Details" asp-route-id="@bug.Id" class="btn btn-sm btn-primary me-2">Details</a>
-                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal-@bug.Id">
-                                Change Status
-                            </button>
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal-@bug.Id">Change Status</button>
 
-                            <!-- Modal -->
+                            <!-- Status Modal -->
                             <div class="modal fade" id="statusModal-@bug.Id" tabindex="-1" aria-labelledby="statusModalLabel-@bug.Id" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
@@ -102,18 +118,15 @@
                                             </div>
                                             <div class="modal-body">
                                                 <input type="hidden" name="id" value="@bug.Id" />
-                                                <div class="form-group mb-2">
-                                                    <label for="status">Select Status</label>
-                                                    <select name="status" class="form-select">
-                                                        @foreach (var status in (IEnumerable<Status>)ViewBag.StatusList)
-                                                        {
-                                                            var displayValue = GetDisplayName(status);
-                                                            <option value="@displayValue" selected="@(bug.Status == displayValue ? "selected" : null)">
-                                                                @displayValue
-                                                            </option>
-                                                        }
-                                                    </select>
-                                                </div>
+                                                <select name="status" class="form-select">
+                                                    @foreach (var statusOption in (IEnumerable<Status>)ViewBag.StatusList)
+                                                    {
+                                                        var statusVal = GetDisplayName(statusOption);
+                                                        <option value="@statusVal" selected="@(bug.Status == statusVal ? "selected" : null)">
+                                                            @statusVal
+                                                        </option>
+                                                    }
+                                                </select>
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -130,3 +143,15 @@
         </table>
     }
 </div>
+
+@{
+    ViewBag.PageAction = "AllBugs";
+    ViewBag.PageController = "Admin";
+    ViewBag.RouteValues = new Dictionary<string, object>
+            {
+                { "keyword", keyword },
+                { "status", status },
+                { "reporterId", reporterId }
+            };
+}
+@await Html.PartialAsync("_Pagination", Model)

@@ -6,9 +6,8 @@ namespace BugTracker.Application.Interfaces
     {
         Task<bool> RegisterAsync(UserDto userDto);
         Task<UserDto?> ValidateUserAsync(string email, string password);
-        Task<UserDto?> GetByEmailAsync(string email);
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task UpdateUserRoleAsync(Guid userId, string newRole);
-
+        Task<PagedResult<UserDto>> GetFilteredUsersPagedAsync(string? search, int page, int pageSize);
     }
 }

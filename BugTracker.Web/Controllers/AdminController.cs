@@ -20,10 +20,11 @@ namespace BugTracker.Web.Controllers
             _userService = userService;
         }
 
-        public async Task<IActionResult> AllBugs(string keyword, string status, Guid? reporterId)
+        public async Task<IActionResult> AllBugs(string keyword, string status, Guid? reporterId, int page = 1, int pageSize = 10)
         {
             ViewBag.StatusList = Enum.GetValues(typeof(Status)).Cast<Status>();
             ViewBag.Reporters = await _userService.GetAllUsersAsync();
+            ViewBag.PageSize = pageSize;
 
             var filter = new BugFilterDto
             {
@@ -32,9 +33,10 @@ namespace BugTracker.Web.Controllers
                 ReporterId = reporterId
             };
 
-            var bugs = await _bugService.GetFilteredBugsAsync(filter);
-            return View(bugs);
+            var result = await _bugService.GetFilteredBugsPagedAsync(filter, page, pageSize);
+            return View(result);
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -44,21 +46,16 @@ namespace BugTracker.Web.Controllers
             return RedirectToAction("AllBugs");
         }
 
+
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ManageRoles(string search)
+        public async Task<IActionResult> ManageRoles(string search, int page = 1, int pageSize = 10)
         {
-            var users = await _userService.GetAllUsersAsync();
-
-            var filteredUsers = users
-                .Where(u => (u.Role == "User" || u.Role == "QA") &&
-                            (string.IsNullOrEmpty(search) ||
-                             u.UserName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                             u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
-
+            var result = await _userService.GetFilteredUsersPagedAsync(search, page, pageSize);
             ViewBag.Search = search;
-            return View(filteredUsers);
+            ViewBag.PageSize = pageSize;
+            return View(result);
         }
+
 
 
         [HttpPost]

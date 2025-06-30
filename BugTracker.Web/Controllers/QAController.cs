@@ -20,10 +20,11 @@ namespace BugTracker.Web.Controllers
 
         [NoCache]
         [Authorize(Roles = "QA")]
-        public async Task<IActionResult> Dashboard(string keyword, string status, string priority)
+        public async Task<IActionResult> Dashboard(string keyword, string status, string priority, int page = 1, int pageSize = 10)
         {
             ViewBag.StatusList = Enum.GetValues(typeof(Status)).Cast<Status>();
             ViewBag.Priorities = new[] { "Low", "Medium", "High" };
+            ViewBag.PageSize = pageSize;
 
             var filter = new BugFilterDto
             {
@@ -31,12 +32,21 @@ namespace BugTracker.Web.Controllers
                 Status = status,
                 Priority = priority
             };
+            var pagedResult = await _bugService.GetFilteredBugsPagedAsync(filter, page, pageSize);
 
-            var bugs = await _bugService.GetFilteredBugsAsync(filter);
-            var qaBugs = bugs.Where(b => b.Status == "Resolved" || b.Status == "Closed").ToList();
+            var qaItems = pagedResult.Items
+                .Where(b => b.Status == "Resolved" || b.Status == "Closed")
+                .ToList();
 
-            return View(qaBugs);
+            return View(new PagedResult<BugDto>
+            {
+                Items = qaItems,
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalItems = qaItems.Count
+            });
         }
+
 
 
         [HttpPost]
