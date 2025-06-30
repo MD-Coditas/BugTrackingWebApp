@@ -13,11 +13,13 @@ namespace BugTracker.Web.Controllers
     {
         private readonly IUserService _userService;
         private readonly IValidator<UserDto> _userValidator;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(IUserService userService, IValidator<UserDto> userValidator)
+        public AccountController(IUserService userService, IValidator<UserDto> userValidator, ILogger<AccountController> logger)
         {
             _userService = userService;
             _userValidator = userValidator;
+            _logger = logger;
         }
 
 
@@ -44,37 +46,48 @@ namespace BugTracker.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(UserDto dto)
         {
-            var user = await _userService.ValidateUserAsync(dto.Email, dto.Password);
-            if (user == null)
+            try
             {
-                ModelState.AddModelError("", "Invalid credentials.");
+                var user = await _userService.ValidateUserAsync(dto.Email, dto.Password);
+                if (user == null)
+                {
+                    _logger.LogWarning("Failed login attempt for email: {Email}", dto.Email);
+                    ModelState.AddModelError("", "Invalid credentials.");
+                    return View(dto);
+                }
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role)
+                };
+
+                var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync("MyCookieAuth", principal);
+                switch (user.Role)
+                {
+                    case "Admin":
+                        return RedirectToAction("AllBugs", "Admin");
+
+                    case "QA":
+                        return RedirectToAction("Dashboard", "QA");
+
+                    case "User":
+                    default:
+                        return RedirectToAction("Report", "Bug");
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error during login for email: {Email}", dto.Email);
+                ModelState.AddModelError("", "An unexpected error occurred while logging in.");
                 return View(dto);
             }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync("MyCookieAuth", principal);
-            switch (user.Role)
-            {
-                case "Admin":
-                    return RedirectToAction("AllBugs", "Admin");
-
-                case "QA":
-                    return RedirectToAction("Dashboard", "QA");
-
-                case "User":
-                default:
-                    return RedirectToAction("Report", "Bug");
-            }
+            
         }
 
         [HttpGet, NoCache]
@@ -100,34 +113,51 @@ namespace BugTracker.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(UserDto dto)
         {
-            var result = await _userValidator.ValidateAsync(dto);
-
-            if (!result.IsValid)
+            try
             {
-                foreach (var error in result.Errors)
+                var result = await _userValidator.ValidateAsync(dto);
+
+                if (!result.IsValid)
                 {
-                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                    }
+                    return View(dto);
                 }
-                return View(dto);
+
+                dto.Role = "User";
+                var success = await _userService.RegisterAsync(dto);
+
+                if (!success)
+                {
+                    ModelState.AddModelError("", "Email already registered.");
+                    return View(dto);
+                }
+
+                return RedirectToAction("Login");
             }
-
-            dto.Role = "User";
-            var success = await _userService.RegisterAsync(dto);
-
-            if (!success)
+            catch(Exception ex)
             {
-                ModelState.AddModelError("", "Email already registered.");
+                Console.WriteLine($"[Register Error]: {ex.Message}");
+                ModelState.AddModelError("", "An unexpected error occurred while registering.");
                 return View(dto);
             }
 
-            return RedirectToAction("Login");
         }
 
 
         [NoCache]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync("MyCookieAuth");
+            try
+            {
+                await HttpContext.SignOutAsync("MyCookieAuth");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Logout Error]: {ex.Message}");
+            }
             return RedirectToAction("Login");
         }
     }

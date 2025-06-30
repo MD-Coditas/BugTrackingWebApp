@@ -1,4 +1,8 @@
 ﻿@model BugDto
+@using System.Reflection
+@using System.ComponentModel.DataAnnotations
+@inject IHttpContextAccessor HttpContextAccessor
+
 @{
     ViewData["Title"] = "Bug Details";
 }
@@ -37,6 +41,59 @@
         }
     </dl>
 
+    @using System.Security.Claims
+    @inject IHttpContextAccessor HttpContextAccessor
+
+    @{
+        var userRole = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value;
+        var isAdmin = userRole == "Admin";
+    }
+
+    @if (isAdmin)
+    {
+        <div class="mt-4">
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#statusModal">
+                Update Status
+            </button>
+        </div>
+
+        <!-- Status Update Modal -->
+        <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form asp-controller="Admin" asp-action="UpdateStatus" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="statusModalLabel">Update Bug Status</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <div class="form-group mb-3">
+                                <label for="status" class="form-label">Select Status</label>
+                                <select name="status" class="form-select">
+                                    @foreach (var status in Enum.GetValues(typeof(BugTracker.Application.Enums.Status)).Cast<BugTracker.Application.Enums.Status>())
+                                    {
+                                        var display = status.GetType().GetMember(status.ToString())[0]
+                                        .GetCustomAttribute<System.ComponentModel.DataAnnotations.DisplayAttribute>()?.Name ?? status.ToString();
+
+                                        <option value="@display" selected="@(Model.Status == display ? "selected" : null)">
+                                            @display
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+
     <hr />
     <h4>Comments</h4>
 
@@ -58,6 +115,4 @@
         </div>
     }
 
-
-    @* <a asp-action="MyBugs" class="btn btn-secondary">Back to My Bugs</a> *@
 </div>
